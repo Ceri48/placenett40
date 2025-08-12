@@ -1,0 +1,14 @@
+// src/styles/base/_globals.scss
+@use '../abstracts/variables' as vars;
+html, body {
+  min-height: 100%;
+}
+body {
+  // ⚠️ Couleur de secours + variables CSS dynamiques (venant de Strapi)
+  background-color: var(--site-bg-color, vars.$bg-fallback);
+  background-image: var(--site-bg-url);
+  background-size: var(--site-bg-size, cover);
+  background-position: var(--site-bg-position, center);
+  background-repeat: var(--site-bg-repeat, no-repeat);
+  background-attachment: var(--site-bg-attachment, scroll);
+}

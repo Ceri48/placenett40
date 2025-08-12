@@ -1,0 +1,22 @@
+// -------------------------------------
+// _reset.scss
+// Réinitialisation des styles par défaut du navigateur
+// -------------------------------------
+@use '../abstracts/variables' as vars;
+@use '../abstracts/mixins' as mixins;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: vars.$background-color;
+  @include mixins.font-default;
+}

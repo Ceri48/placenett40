@@ -1,0 +1,21 @@
+@use '../abstracts/variables' as vars;
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: vars.$gap-default;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  &__title {
+    font-weight: bold;
+    margin-bottom: vars.$gap-default;
+  }
+
+  &__content {
+    margin-bottom: vars.$gap-default;
+  }
+
+  &__footer {
+    text-align: right;
+  }
+}

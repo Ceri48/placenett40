@@ -1,0 +1,24 @@
+// src/styles/abstracts/_mixins.scss
+@use '../abstracts/variables' as vars;
+@mixin fluid-type($min, $max, $vw-min: 360, $vw-max: 1200) {
+  font-size: clamp(#{$min}, calc(#{$min} + (#{$max - $min}) * ((100vw - #{$vw-min}px) / (#{$vw-max - $vw-min}))), #{$max});
+}
+
+@mixin responsive-container {
+  width: 100%;
+  max-width: vars.$max-width-container;
+  margin: 0 auto;
+  padding: 0 vars.$gap-default;
+}
+
+@mixin font-default {
+  font-family: Arial, sans-serif;
+  color: vars.$text-color;
+}
+
+// Mixin pour une grille basique
+@mixin grid-container($columns: vars.$columns-default, $gap: vars.$gap-default) {
+  display: grid;
+  grid-gap: $gap;
+  grid-template-columns: repeat($columns, 1fr);
+}

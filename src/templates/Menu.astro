@@ -1,0 +1,61 @@
+---
+import { strapiGet } from "../lib/strapi";
+import type {Menu} from "../models/Menu";
+
+const { slug } = Astro.props;
+
+const menuRes = await strapiGet<{ data: Menu[] }>(
+    "/api/menus", // <- pluriel
+    {
+        query: {
+            "filters[slug][$eq]": slug,
+            // populate bien structuré (objet), avec relations imbriquées
+            populate: {
+                Liens: {
+                    populate: { article: { fields: ["slug", "titre"] } },
+                    sort: ["Ordre:asc"],
+                },
+                LiensGroupee: {
+                    populate: {
+                        Liens: {
+                            populate: { article: { fields: ["slug", "titre"] } },
+                            sort: ["Ordre:asc"],
+                        },
+                    },
+                    sort: ["Ordre:asc"],
+                },
+            },
+            "pagination[limit]": 1,
+        },
+    }
+);
+
+const menu = menuRes?.data?.[0] || null;
+---
+
+<nav>
+    <ul>
+        {menu.Liens?.map(lien => (
+                <li>
+                    <a href={`/articles/${lien.article?.slug}/`}>
+                        {lien.Texte}
+                    </a>
+                </li>
+        ))}
+
+        {menu.LiensGroupee?.map(group => (
+                <li>
+                    <strong>{group.Texte}</strong>
+                    <ul>
+                        {group.Liens?.map(lien => (
+                                <li>
+                                    <a href={`/articles/${lien.article?.slug}/`}>
+                                        {lien.Texte}
+                                    </a>
+                                </li>
+                        ))}
+                    </ul>
+                </li>
+        ))}
+    </ul>
+</nav>

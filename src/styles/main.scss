@@ -1,0 +1,22 @@
+// src/styles/main.scss
+@forward 'abstracts/variables';
+@forward 'abstracts/mixins';
+@forward 'abstracts/functions';
+
+@use 'base/reset';
+@use 'base/typography';
+@use 'base/globals';
+
+@use 'layout/grid';
+@use 'layout/header';
+@use 'layout/footer';
+
+@use 'components/buttons';
+@use 'components/nav';
+@use 'components/card';
+
+@use 'utilities/helpers';
+@use 'utilities/spacing';
+
+// Thème par défaut
+@use 'themes/light';

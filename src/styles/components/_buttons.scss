@@ -1,0 +1,32 @@
+// src/styles/components/_buttons.scss
+@use '../abstracts/variables' as vars;
+@use 'sass:color';
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .6rem 1rem;
+  border-radius: .5rem;
+  text-decoration: none;
+  // On lit d’abord une CSS var (pilotée par Strapi), sinon fallback SCSS
+  background: var(--brand, vars.$brand);
+  color: #fff;
+
+  &:hover { opacity: .92; }
+}
+.button {
+  background: vars.$primary-color;
+
+  &:hover {
+    background: color.adjust(vars.$primary-color, $lightness: -10%);
+  }
+
+  &--secondary {
+    background: vars.$secondary-color;
+
+    &:hover {
+      background: color.adjust(vars.$secondary-color, $lightness: -10%);
+    }
+  }
+}

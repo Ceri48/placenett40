@@ -1,0 +1,96 @@
+---
+import '../styles/main.scss';
+import Navbar from "./Navbar.astro";
+import {strapiGet} from "../lib/strapi";
+const { title, description, canonical, noindex, ogImage, alternates = [] } = Astro.props;
+const siteName = 'placenett40';
+
+// Utilitaire pour obtenir l'URL absolue du media Strapi
+const BASE = import.meta.env.PUBLIC_STRAPI_URL ?? import.meta.env.STRAPI_URL ?? 'http://localhost:1337';
+const absUrl = (url?: string) => {
+    if (!url) return null;
+    return url.startsWith('http') ? url : `${BASE}${url}`;
+};
+
+// Fetch Global
+const globalRes = await strapiGet<{ data: any }>(
+    "/api/global",
+    { query: { populate: "*"}}
+);
+
+const g = globalRes?.data ?? {};
+const bg = g.background;
+const bgMobile = g.backgroundMobile;
+
+// Choisir la bonne variante (tu peux raffiner avec un match CSS via <picture>, mais pour background-image on passera via CSS)
+const bgUrl = absUrl(bg?.url);
+const bgMobileUrl = absUrl(bgMobile?.url);
+
+// Overlay
+const overlayColor = g.overlayColor ?? "#000000";
+const overlayOpacity = typeof g.overlayOpacity === "number" ? g.overlayOpacity : 0;
+
+// CSS helpers
+const backgroundColor = g.backgroundColor ?? "transparent";
+const backgroundSize = g.backgroundSize ?? "cover";
+const backgroundPosition = g.backgroundPosition ?? "center";
+const backgroundRepeat = g.backgroundRepeat ?? "no-repeat";
+const backgroundAttachment = g.backgroundAttachment ?? "scroll";
+
+---
+
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} | ${siteName}` : siteName}</title>
+    {description && <meta name="description" content={description} />}
+        <link rel="canonical" href={canonical} />
+        {noindex && <meta name="robots" content="noindex,nofollow" />}
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content={siteName} />
+        <meta property="og:title" content={title || siteName} />
+        {description && <meta property="og:description" content={description} />}
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        {alternates.map(a => (
+                <link rel="alternate" hreflang={a.hrefLang} href={a.href} />
+        ))}
+        <link rel="preconnect" href={import.meta.env.STRAPI_URL} crossorigin />
+</head>
+<body class="site-overlay">
+<Navbar siteName={siteName} />
+<slot />
+</body>
+</html>
+
+<style
+        is:global
+        define:vars={{
+            siteBgColor: backgroundColor,
+            siteBgUrl: `url("${bgUrl ?? ''}")`,
+            siteBgUrlMobile: `url("${bgMobileUrl ?? ''}")`,
+            siteBgSize: backgroundSize,
+            siteBgPosition: backgroundPosition,
+            siteBgRepeat: backgroundRepeat,
+            siteBgAttachment: backgroundAttachment,
+            siteOverlayColor: overlayColor,
+            siteOverlayOpacity: overlayOpacity
+        }}
+>
+    :root {
+        --site-bg-color: var(--siteBgColor);
+        --site-bg-url: var(--siteBgUrl);
+        --site-bg-url-mobile: var(--siteBgUrlMobile);
+        --site-bg-size: var(--siteBgSize);
+        --site-bg-position: var(--siteBgPosition);
+        --site-bg-repeat: var(--siteBgRepeat);
+        --site-bg-attachment: var(--siteBgAttachment);
+        --site-overlay-color: var(--siteOverlayColor);
+        --site-overlay-opacity: var(--siteOverlayOpacity);
+    }
+
+    @media (max-width: 640px) {
+        body { background-image: var(--site-bg-url-mobile, var(--site-bg-url)); }
+    }
+</style>

@@ -1,0 +1,89 @@
+---
+import Layout from '../../templates/Layout.astro';
+import { strapiGet } from '../../lib/strapi';
+import type {StrapiItem} from "../../models/StrapiItem";
+import type {Article} from "../../models/Article";
+
+
+
+export async function getStaticPaths() {
+    const data = await strapiGet<{ data: Array<StrapiItem & Article> }>(
+        '/api/articles',
+        { query: { fields: 'titre,slug', pagination: { pageSize: 1000 } as any } }
+    );
+
+    return data.data.map((item) => ({
+        params: { slug: item.slug },
+        props: { slug: item.slug },
+    }));
+}
+
+const { slug } = Astro.props;
+const articleRes = await strapiGet<{ data: StrapiItem & Article[] | null }>(
+    '/api/articles',
+    {
+        query: {
+            'filters[slug][$eq]': slug,
+            populate: [
+                'seo.shareImage',
+            ].join(','),
+            'pagination[limit]': 1, // pour ne récupérer qu’un seul élément
+        }
+    }
+);
+
+if (!articleRes.data) throw new Error('Article not found');
+
+const a = articleRes.data?.[0];
+const site = Astro.site?.origin || 'https://www.exemple.com';
+const canonical = a.seo?.canonicalURL || `${site}/articles/${a.slug}/`;
+const ogImg = a.seo?.shareImage?.data?.url
+    ? new URL(a.seo.shareImage.data.url, import.meta.env.STRAPI_URL).href
+    : undefined;
+
+// JSON-LD Article
+const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: a.seo?.metaTitle || a.titre,
+    description: a.seo?.metaDescription || a.excerpt,
+    mainEntityOfPage: canonical,
+    image: ogImg ? [ogImg] : undefined,
+    author: { '@type': 'Organization', name: 'Votre marque' },
+    publisher: {
+        '@type': 'Organization',
+        name: 'Votre marque',
+        logo: { '@type': 'ImageObject', url: `${site}/logo.png` }
+    }
+};
+
+const alternates = (a.localizations?.data || []).map(l => ({
+    hrefLang: l.locale,
+    href: `${site}/${l.locale}/articles/${l.slug}/`
+}));
+---
+
+<Layout
+        title={a.seo?.metaTitle || a.titre}
+        description={a.seo?.metaDescription || a.excerpt}
+        canonical={canonical}
+        noindex={a.seo?.noindex}
+        ogImage={ogImg}
+        alternates={alternates}
+>
+    <article class="prose mx-auto">
+        <h1>{a.titre}</h1>
+        {a.cover?.data?.url && (
+                <img
+                        src={new URL(a.cover.data.url, import.meta.env.STRAPI_URL).href}
+                        alt={a.cover.data.alternativeText || a.titre}
+                        loading="eager"
+                        width="1200"
+                        height="630"
+                />
+        )}
+        <div set:html={a.content} />
+    </article>
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+</Layout>

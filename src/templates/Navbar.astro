@@ -1,0 +1,11 @@
+---
+import { strapiGet } from '../lib/strapi';
+import Menu from "./Menu.astro";
+
+const { siteName } = Astro.props;
+
+const { data } = await strapiGet<{ data: any }>('/api/header', { query: { populate: 'menu' } });
+const menu = data?.menu || {};
+---
+
+<Menu slug={menu.slug} ></Menu>

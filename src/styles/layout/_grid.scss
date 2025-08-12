@@ -1,0 +1,27 @@
+@use '../abstracts/variables' as vars;
+@use '../abstracts/mixins' as mixins;
+
+// Classe générique pour une grille
+.grid {
+  @include mixins.grid-container();
+}
+
+// Classes utilitaires pour changer le nombre de colonnes
+@for $i from 2 through 12 {
+  .grid--#{$i}-col {
+    @include mixins.grid-container($columns: $i);
+  }
+}
+// Classes utilitaires pour changer le nombre de ligne
+@for $i from 2 through 12 {
+  .grid--#{$i}-row {
+    grid-template-rows: repeat($i, 1fr);
+  }
+}
+
+// Exemple de grille responsive en utilisant auto-fit
+.grid--responsive {
+  display: grid;
+  grid-gap: vars.$gap-default;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
