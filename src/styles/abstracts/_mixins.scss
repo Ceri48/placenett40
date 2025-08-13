@@ -1,5 +1,6 @@
 // src/styles/abstracts/_mixins.scss
 @use '../abstracts/variables' as vars;
+
 @mixin fluid-type($min, $max, $vw-min: 360, $vw-max: 1200) {
   font-size: clamp(#{$min}, calc(#{$min} + (#{$max - $min}) * ((100vw - #{$vw-min}px) / (#{$vw-max - $vw-min}))), #{$max});
 }
@@ -21,4 +22,77 @@
   display: grid;
   grid-gap: $gap;
   grid-template-columns: repeat($columns, 1fr);
+}
+
+@mixin btn-reset() {
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+}
+
+@mixin burger-button($btn-size: 2.5em) {
+
+  #menu_checkbox {
+    display: none;
+  }
+
+  label {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 0;
+    display: block;
+    width: $btn-size;
+    height: $btn-size;
+    margin: calc($btn-size / -2) auto 0 auto;
+    cursor: pointer;
+  }
+
+  label div {
+    position: relative;
+    top: 0;
+    height: calc($btn-size / 5);
+    background-color: #fff;
+    margin-bottom: calc($btn-size / 5);
+    transition: 0.3s ease transform, 0.3s ease top, 0.3s ease width,
+    0.3s ease right;
+    border-radius: calc($btn-size / 30);
+  }
+
+  label div:first-child {
+    transform-origin: 0;
+  }
+
+  label div:nth-child(2) {
+    right: 0;
+    width: $btn-size;
+  }
+
+  label div:last-child {
+    margin-bottom: 0;
+    transform-origin: $btn-size;
+  }
+
+
+  #menu_checkbox:checked + label div:first-child {
+    top: calc($btn-size / -10);
+    transform: rotateZ(45deg);
+  }
+
+  #menu_checkbox:checked + label div:last-child {
+    top: calc($btn-size / 10);
+    transform: rotateZ(45deg);
+  }
+
+  #menu_checkbox:checked + label div:nth-child(2) {
+    width: calc($btn-size * 1.41666667);
+    top: 0;
+    right: calc($btn-size / 4.61538462);
+    transform: rotateZ(-45deg);
+  }
+
 }

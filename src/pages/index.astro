@@ -1,21 +1,25 @@
 ---
 import Layout from '../templates/Layout.astro';
-import { strapiGet } from '../lib/strapi';
+import {strapiGet} from '../lib/strapi';
+import '../styles/pages/_home.scss'
 
-const { data } = await strapiGet<{ data: any }>('/api/accueil', { query: { populate: 'seo' } });
+const {data} = await strapiGet<{ data: any }>('/api/accueil', {query: {populate: 'seo'}});
 const seo = data?.attributes?.seo || {};
 const site = Astro.site?.origin || 'https://www.exemple.com';
 const canonical = seo.canonicalURL || `${site}/`;
 ---
 
 <Layout
-	title={seo.metaTitle || 'Accueil'}
-	description={seo.metaDescription || ''}
-	canonical={canonical}
-	noindex={seo.noindex}
+        title={seo.metaTitle || 'Accueil'}
+        description={seo.metaDescription || ''}
+        canonical={canonical}
+        noindex={seo.noindex}
 >
-	<main class="prose mx-auto">
-		<h1>Bienvenue</h1>
-	</main>
+    <section class="main-carrousel">
+        <h1 style="padding: 100px">COUCOU</h1>
+    </section>
+    <section style="height: 150px">
+        <h2>test</h2>
+    </section>
 </Layout>
 

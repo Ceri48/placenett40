@@ -21,3 +21,16 @@ $columns-default: 12;
 
 // Breakpoints
 $breakpoint-mobile: 768px;
+
+// NavBar
+$navbar-h: 64px;
+$container-w: 1100px;
+$gutter: 20px;
+$bg-blur: 8px;
+$bg-color: rgba(255, 255, 255, 0.85); // fond quand scrolé
+$fg-color: #0f172a; // texte
+$accent: #4f46e5;
+
+$bp-sm: 480px;
+$bp-md: 768px;
+$bp-lg: 1024px;

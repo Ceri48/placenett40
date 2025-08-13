@@ -1,0 +1,7 @@
+@use '../abstracts/variables' as vars;
+
+@mixin container {
+  width: min(100% - 2 * #{vars.$gutter}, #{vars.$container-w});
+  margin-inline: auto;
+}
+

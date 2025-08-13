@@ -1,5 +1,6 @@
 // src/styles/components/_buttons.scss
 @use '../abstracts/variables' as vars;
+@use '../abstracts/mixins' as mixins;
 @use 'sass:color';
 
 .button {
@@ -13,8 +14,11 @@
   background: var(--brand, vars.$brand);
   color: #fff;
 
-  &:hover { opacity: .92; }
+  &:hover {
+    opacity: .92;
+  }
 }
+
 .button {
   background: vars.$primary-color;
 
@@ -29,4 +33,8 @@
       background: color.adjust(vars.$secondary-color, $lightness: -10%);
     }
   }
+}
+
+.burger-button {
+  @include mixins.burger-button()
 }

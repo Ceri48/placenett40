@@ -1,11 +1,33 @@
 ---
-import { strapiGet } from '../lib/strapi';
+import {strapiGet} from '../lib/strapi';
 import Menu from "./Menu.astro";
 
-const { siteName } = Astro.props;
+const {siteName} = Astro.props;
 
-const { data } = await strapiGet<{ data: any }>('/api/header', { query: { populate: 'menu' } });
-const menu = data?.menu || {};
+const {data} = await strapiGet<{ data: any }>('/api/header', {query: {populate: 'menu'}});
+const menu = data?.menu || {} as Menu;
 ---
+<nav class="navbar">
+    <a href="/" class="logo">
+        <img src="/logo.png " alt="logo"/>
+    </a>
+    <div class="nav-links">
+        <Menu slug={menu.slug}></Menu>
+    </div>
 
-<Menu slug={menu.slug} ></Menu>
+    <div class="burger-button">
+        <input type="checkbox" id="menu_checkbox">
+        <label for="menu_checkbox">
+            <div></div>
+            <div></div>
+            <div></div>
+        </label>
+    </div>
+</nav>
+
+<script is:inline>
+    const navbar = document.querySelector('.navbar');
+    const onScroll = () => navbar.classList.toggle('navbar--scrolled', window.scrollY > 0);
+    onScroll();
+    window.addEventListener('scroll', onScroll, {passive: true});
+</script>
