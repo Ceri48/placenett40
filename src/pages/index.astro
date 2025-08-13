@@ -2,11 +2,13 @@
 import Layout from '../templates/Layout.astro';
 import {strapiGet} from '../lib/strapi';
 import '../styles/pages/_home.scss'
+import Carrousel from "../templates/Carrousel.astro";
 
 const {data} = await strapiGet<{ data: any }>('/api/accueil', {query: {populate: 'seo'}});
 const seo = data?.attributes?.seo || {};
 const site = Astro.site?.origin || 'https://www.exemple.com';
 const canonical = seo.canonicalURL || `${site}/`;
+const carrousel = "principal";
 ---
 
 <Layout
@@ -16,7 +18,7 @@ const canonical = seo.canonicalURL || `${site}/`;
         noindex={seo.noindex}
 >
     <section class="main-carrousel">
-        <h1 style="padding: 100px">COUCOU</h1>
+        <Carrousel slug="principal"></Carrousel>
     </section>
     <section style="height: 150px">
         <h2>test</h2>

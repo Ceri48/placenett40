@@ -1,0 +1,162 @@
+---
+import {absUrl, strapiGet} from "../lib/strapi";
+import type {Carrousel} from "../models/Carrousel";
+
+const {slug} = Astro.props;
+
+const carrouselRes = await strapiGet<{ data: Carrousel[] }>(
+    "/api/carrousels",
+    {
+        query: {
+            "filters[slug][$eq]": slug,
+            // populate bien structuré (objet), avec relations imbriquées
+            populate: "*",
+            "pagination[limit]": 1,
+        },
+    }
+);
+
+const carrousel = carrouselRes?.data?.[0] || null;
+const photos = carrousel?.Photos ?? [];
+const cid = `c-${Math.random().toString(36).slice(2)}`;
+---
+{photos.length > 0 && (
+<section class="carousel" id={cid}>
+    <div class="viewport">
+        {photos.map((photo) => (
+                <figure class="slide">
+                    <img
+                            loading="lazy"
+                            src={absUrl(photo.url)}
+                            alt={photo.alternativeText ?? photo.name}
+                    />
+                    {photo.caption &&
+                            <figcaption>{photo.caption}</figcaption>}
+                </figure>
+        ))}
+    </div>
+
+    <button class="nav prev" aria-label="Précédent">‹</button>
+    <button class="nav next" aria-label="Suivant">›</button>
+
+    <div class="dots">
+        {photos.map((_, i) => (
+                <button class="dot" data-index={i}></button>
+        ))}
+    </div>
+</section>
+    )}
+
+<style>
+    .carousel {
+        padding: 100px;
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .viewport {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+    }
+
+    .slide {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        position: relative;
+    }
+
+    .slide img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    figcaption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        width: 2rem;
+        height: 2rem;
+        cursor: pointer;
+    }
+
+    .prev {
+        left: 0.5rem;
+    }
+
+    .next {
+        right: 0.5rem;
+    }
+
+    .dots {
+        display: flex;
+        gap: 0.4rem;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+
+    .dot {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 50%;
+        border: none;
+        background: #ccc;
+        cursor: pointer;
+    }
+
+    .dot.active {
+        background: #333;
+    }
+</style>
+
+<script is:inline>
+    const root = document.getElementById({cid});
+    const vp = root.querySelector('.viewport');
+    const slides = [...root.querySelectorAll('.slide')];
+    const dots = [...root.querySelectorAll('.dot')];
+    const prev = root.querySelector('.prev');
+    const next = root.querySelector('.next');
+    let idx = 0;
+
+    function go(i) {
+        idx = (i + slides.length) % slides.length;
+        slides[idx].scrollIntoView({behavior: 'smooth'});
+        updateDots();
+    }
+
+    function updateDots() {
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    }
+
+    prev.addEventListener('click', () => go(idx - 1));
+    next.addEventListener('click', () => go(idx + 1));
+    dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
+
+    vp.addEventListener('scroll', () => {
+        const newIdx = Math.round(vp.scrollLeft / vp.clientWidth);
+        if (newIdx !== idx) {
+            idx = newIdx;
+            updateDots();
+        }
+    });
+
+    updateDots();
+</script>

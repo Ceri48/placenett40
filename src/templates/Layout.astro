@@ -1,16 +1,9 @@
 ---
 import '../styles/main.scss';
 import Navbar from "./Navbar.astro";
-import {strapiGet} from "../lib/strapi";
+import {strapiGet, absUrl} from "../lib/strapi";
 const { title, description, canonical, noindex, ogImage, alternates = [] } = Astro.props;
 const siteName = 'Place Nett40';
-
-// Utilitaire pour obtenir l'URL absolue du media Strapi
-const BASE = import.meta.env.PUBLIC_STRAPI_URL ?? import.meta.env.STRAPI_URL ?? 'http://localhost:1337';
-const absUrl = (url?: string) => {
-    if (!url) return null;
-    return url.startsWith('http') ? url : `${BASE}${url}`;
-};
 
 // Fetch Global
 const globalRes = await strapiGet<{ data: any }>(
