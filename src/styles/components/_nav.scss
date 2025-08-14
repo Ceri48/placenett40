@@ -15,7 +15,6 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
     backdrop-filter: blur(8px);
     transition: all 0.3s ease-in-out;
-    color: red;
   }
 
   .burger-button {
@@ -26,14 +25,22 @@
     top: 30px;
   }
 
-  a {
-    color: white;
-  }
-
   button {
     @include mixins.btn-reset();
-    color: white;
   }
+
+  &.navbar--light-text {
+    a, button {
+      color: white;
+    }
+  }
+
+  &.navbar--dark-text {
+    a, button {
+      color: black;
+    }
+  }
+
 
   .logo img {
     position: absolute;
@@ -86,7 +93,6 @@
     }
   }
 }
-
 
 @media screen and (max-width: 900px) {
   .navbar {

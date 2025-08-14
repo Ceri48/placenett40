@@ -19,7 +19,13 @@ const bgMobile = g.backgroundMobile;
 // Choisir la bonne variante (tu peux raffiner avec un match CSS via <picture>, mais pour background-image on passera via CSS)
 const bgUrl = absUrl(bg?.[0].url);
 const bgMobileUrl = absUrl(bgMobile?.[0].url);
+// Listes complètes d'URLs (desktop/mobile) depuis Global
+const bgDesktopUrls = (g.background ?? []).map(i => absUrl(i.url));
+const bgMobileUrls  = (g.backgroundMobile ?? g.background ?? []).map(i => absUrl(i.url));
 
+// Timings d’animation
+const BG_INTERVAL_MS = 7000; // temps entre deux changements
+const BG_ANIM_MS     = 700;  // durée de la transition
 // Overlay
 const overlayColor = g.overlayColor ?? "#000000";
 const overlayOpacity = typeof g.overlayOpacity === "number" ? g.overlayOpacity : 0;
@@ -54,7 +60,7 @@ const backgroundAttachment = g.backgroundAttachment ?? "scroll";
         <link rel="icon" type="image/png" href="/logo.png" />
         <link href="https://cdn.lineicons.com/5.0/lineicons.css" rel="stylesheet" />
 </head>
-<body class="site-overlay">
+<body class="site-overlay" data-bg-interval={BG_INTERVAL_MS}>
 <Navbar siteName={siteName} />
 <slot />
 </body>
@@ -86,7 +92,161 @@ const backgroundAttachment = g.backgroundAttachment ?? "scroll";
         --site-overlay-opacity: var(--siteOverlayOpacity);
     }
 
-    @media (max-width: 640px) {
-        body { background-image: var(--site-bg-url-mobile, var(--site-bg-url)); }
-    }
+
 </style>
+<script
+        is:inline
+        define:vars={{
+            DESKTOP: bgDesktopUrls,          // tableaux d'URL (déjà absolues)
+    MOBILE: bgMobileUrls,            // idem (retombe sur desktop si vide)
+    ANIM_MS: BG_ANIM_MS,             // durée d'anim (ms)
+    INTERVAL_MS_DEFAULT: BG_INTERVAL_MS // intervalle par défaut (ms)
+  }}
+>
+    // Les identifiants DESKTOP, MOBILE, ANIM_MS, INTERVAL_MS_DEFAULT
+    // sont injectés par Astro ici (pas besoin de {JSON.stringify(...)} ni de redeclarer `const ... =`)
+
+    // Interval réel: on laisse la possibilité de surcharger via data-attr du <body>
+    const INTERVAL_MS = Number(document.body.dataset.bgInterval || INTERVAL_MS_DEFAULT);
+
+    // Passe la durée à la CSS
+    document.body.style.setProperty('--bg-anim-dur', `${ANIM_MS}ms`);
+
+    // Préchargement
+    const preload = (url) => { const img = new Image(); img.src = url; };
+    [...new Set([...(DESKTOP || []), ...(MOBILE || [])])].forEach(preload);
+
+    // Choix mobile/desktop
+    const mql = window.matchMedia('(max-width: 640px)');
+    const pickList = () => (mql.matches ? ((MOBILE && MOBILE.length) ? MOBILE : DESKTOP) : DESKTOP);
+
+    let list = pickList();
+    if (!list || !list.length) {
+        console.warn('[bg-rotator] aucune image dans Global.background');
+    } else {
+        let index = 0;
+
+        const setVar = (name, url) =>
+            document.body.style.setProperty(name, url ? `url('${url}')` : '');
+
+        // État initial
+        setVar('--bg-current', list[0]);
+
+        if (list.length > 1) {
+            const step = () => {
+                const nextIndex = (index + 1) % list.length;
+                const currUrl = list[index];
+                const nextUrl = list[nextIndex];
+
+                setVar('--bg-out',  currUrl);
+                setVar('--bg-next', nextUrl);
+
+                document.body.classList.add('bg-animating');
+
+                window.setTimeout(() => {
+                    setVar('--bg-current', nextUrl);
+                    document.body.classList.remove('bg-animating');
+                    index = nextIndex;
+                    updateNavbarTextColor();
+                }, ANIM_MS);
+            };
+
+            const timer = window.setInterval(step, INTERVAL_MS);
+            window.addEventListener('pagehide', () => window.clearInterval(timer));
+        }
+
+        // Bascule responsive
+        mql.addEventListener?.('change', () => {
+            const currentUrl = list[index];
+            list = pickList();
+            if (!list || !list.length) return;
+            const sameIdx = list.indexOf(currentUrl);
+            index = sameIdx >= 0 ? sameIdx : 0;
+            setVar('--bg-current', list[index]);
+            updateNavbarTextColor();
+        });
+    }
+    window.addEventListener('scroll', ()=>{
+        updateNavbarTextColor()
+    }, {passive: true});
+
+    updateNavbarTextColor()
+
+    function yiq(r, g, b) { return 0.299*r + 0.587*g + 0.114*b; }
+
+    function setNavbarColorMode(mode) {
+        const nav = document.querySelector('.navbar');
+        if (!nav) return;
+        if (mode === 'light') {
+            nav.classList.add('navbar--light-text');
+            nav.classList.remove('navbar--dark-text');
+            nav.style.setProperty('--navbar-fg', '#ffffff');
+        } else {
+            nav.classList.add('navbar--dark-text');
+            nav.classList.remove('navbar--light-text');
+            nav.style.setProperty('--navbar-fg', '#111111');
+        }
+    }
+
+    // Tente d'échantillonner la bande derrière la navbar
+    async function updateNavbarTextColor() {
+        const nav = document.querySelector('.navbar');
+        if (!nav) return;
+
+        // Récupère l’URL de l’image courante depuis la CSS var
+        const bgVar = getComputedStyle(document.body).getPropertyValue('--bg-current').trim();
+        const match = bgVar.match(/url\(["']?(.*?)["']?\)/i);
+        const url = match ? match[1] : null;
+        if (!url) return;
+
+        // Prépare l'image avec CORS (ton serveur d'images doit envoyer Access-Control-Allow-Origin: *)
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        const done = new Promise((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = reject;
+        });
+        img.src = url;
+
+        try {
+            await done;
+
+            const w = Math.max(1, Math.min(800, img.naturalWidth));         // limite perf
+            const h = Math.max(1, Math.min(nav.offsetHeight, 120));         // bande hauteur navbar
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            // on prend le haut de l'image (comme background-position:center ça reste pertinent)
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const { data } = ctx.getImageData(0, 0, w, h);
+            let r = 0, g = 0, b = 0, count = 0;
+            // sous-échantillonnage pour aller vite
+            const step = 16; // lis 1 pixel sur 4x4
+            for (let y = 0; y < h; y += 4) {
+                for (let x = 0; x < w; x += 4) {
+                    const i = ((y * w) + x) * 4;
+                    r += data[i]; g += data[i+1]; b += data[i+2];
+                    count++;
+                }
+            }
+            r /= count; g /= count; b /= count;
+
+            const L = yiq(r, g, b);
+            // seuil : 128 (tu peux ajuster à 140 si tu veux des textes plus souvent foncés)
+            setNavbarColorMode(L > 128 ? 'dark' : 'light');
+
+            // retire le fallback blend si actif
+            nav.classList.remove('navbar--blend-fallback');
+        } catch {
+            // CORS ou autre : fallback CSS
+            const nav = document.querySelector('.navbar');
+            if (nav) {
+                nav.classList.add('navbar--blend-fallback');
+                // enlève les classes explicites pour laisser mix-blend-mode faire le job
+                nav.classList.remove('navbar--light-text', 'navbar--dark-text');
+                nav.style.removeProperty('--navbar-fg');
+            }
+        }
+    }
+</script>
