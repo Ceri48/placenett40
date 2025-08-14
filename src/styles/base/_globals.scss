@@ -1,14 +1,103 @@
 // src/styles/base/_globals.scss
 @use '../abstracts/variables' as vars;
+
 html, body {
   min-height: 100%;
 }
+
 body {
   // ⚠️ Couleur de secours + variables CSS dynamiques (venant de Strapi)
   background-color: var(--site-bg-color, vars.$bg-fallback);
-  background-image: var(--site-bg-url);
+  background-image: var(--bg-current, var(--site-bg-url));
   background-size: var(--site-bg-size, cover);
   background-position: var(--site-bg-position, center);
   background-repeat: var(--site-bg-repeat, no-repeat);
   background-attachment: var(--site-bg-attachment, scroll);
+  transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
+}
+
+/* === Carousel de fond sur le BODY (calques qui glissent) === */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2; /* Derrière l’overlay (-1) et le contenu */
+  pointer-events: none;
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0; /* visibles seulement pendant la transition */
+  will-change: transform;
+}
+
+/* ::before = calque entrant (depuis la droite) */
+body::before {
+  background-image: var(--bg-next);
+  transform: translateX(100%);
+}
+
+/* ::after = calque sortant (vers la gauche) */
+body::after {
+  background-image: var(--bg-out);
+  transform: translateX(0);
+}
+
+/* Activation pendant la transition */
+body.bg-animating::before,
+body.bg-animating::after {
+  opacity: 1;
+}
+
+body.bg-animating::before {
+  animation: slideInFromRight var(--bg-anim-dur, 700ms) ease both;
+}
+
+body.bg-animating::after {
+  animation: slideOutToLeft var(--bg-anim-dur, 700ms) ease both;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* L’overlay que tu as déjà définie reste telle quelle */
+.site-overlay-tint {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* au-dessus des pseudos du body (-2) */
+  background: var(--site-overlay-color);
+  opacity: var(--site-overlay-opacity);
+  pointer-events: none;
+}
+
+/* Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  body.bg-animating::before,
+  body.bg-animating::after {
+    animation: none !important;
+    transform: none !important;
+    opacity: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background-image: var(--bg-current, var(--site-bg-url-mobile, var(--site-bg-url)));
+  }
 }
