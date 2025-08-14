@@ -51,7 +51,7 @@ const cid = `c-${Math.random().toString(36).slice(2)}`;
     .carousel {
         padding: 100px;
         position: relative;
-        max-width: 900px;
+        height: 100vh;
         margin: 0 auto;
     }
 
@@ -127,36 +127,3 @@ const cid = `c-${Math.random().toString(36).slice(2)}`;
     }
 </style>
 
-<script is:inline>
-    const root = document.getElementById({cid});
-    const vp = root.querySelector('.viewport');
-    const slides = [...root.querySelectorAll('.slide')];
-    const dots = [...root.querySelectorAll('.dot')];
-    const prev = root.querySelector('.prev');
-    const next = root.querySelector('.next');
-    let idx = 0;
-
-    function go(i) {
-        idx = (i + slides.length) % slides.length;
-        slides[idx].scrollIntoView({behavior: 'smooth'});
-        updateDots();
-    }
-
-    function updateDots() {
-        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    }
-
-    prev.addEventListener('click', () => go(idx - 1));
-    next.addEventListener('click', () => go(idx + 1));
-    dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
-
-    vp.addEventListener('scroll', () => {
-        const newIdx = Math.round(vp.scrollLeft / vp.clientWidth);
-        if (newIdx !== idx) {
-            idx = newIdx;
-            updateDots();
-        }
-    });
-
-    updateDots();
-</script>

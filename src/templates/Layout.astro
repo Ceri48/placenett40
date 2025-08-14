@@ -2,11 +2,12 @@
 import '../styles/main.scss';
 import Navbar from "./Navbar.astro";
 import {strapiGet, absUrl} from "../lib/strapi";
+import type {Global} from "../models/Global";
 const { title, description, canonical, noindex, ogImage, alternates = [] } = Astro.props;
 const siteName = 'Place Nett40';
 
 // Fetch Global
-const globalRes = await strapiGet<{ data: any }>(
+const globalRes = await strapiGet<{ data: Global }>(
     "/api/global",
     { query: { populate: "*"}}
 );
@@ -16,8 +17,8 @@ const bg = g.background;
 const bgMobile = g.backgroundMobile;
 
 // Choisir la bonne variante (tu peux raffiner avec un match CSS via <picture>, mais pour background-image on passera via CSS)
-const bgUrl = absUrl(bg?.url);
-const bgMobileUrl = absUrl(bgMobile?.url);
+const bgUrl = absUrl(bg?.[0].url);
+const bgMobileUrl = absUrl(bgMobile?.[0].url);
 
 // Overlay
 const overlayColor = g.overlayColor ?? "#000000";
